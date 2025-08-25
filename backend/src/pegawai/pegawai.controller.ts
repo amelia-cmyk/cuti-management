@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { PegawaiService } from './pegawai.service';
 import { Pegawai } from './pegawai.entity';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('pegawai')
 export class PegawaiController {
   constructor(private readonly pegawaiService: PegawaiService) {}
@@ -11,12 +13,13 @@ export class PegawaiController {
     return this.pegawaiService.findAll();
   }
 
-  // @Post()
-  // create(@Body() data: Partial<Pegawai>) {
-  //   return this.pegawaiService.create(data);
-  // }
+  @Get('with-cuti')
+  findAllWithCuti() {
+    return this.pegawaiService.findAllWithCuti();
+  }
+
   @Post()
-  create(@Body() body) {
+  create(@Body() body: Partial<Pegawai>) {
     return this.pegawaiService.create(body);
   }
 

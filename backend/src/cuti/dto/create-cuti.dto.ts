@@ -1,7 +1,15 @@
-import { IsDateString, IsInt, Min, IsNotEmpty } from 'class-validator';
+import { IsInt, IsDateString, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class CreateCutiDto {
-  @IsInt() @Min(1) pegawaiId: number;
-  @IsNotEmpty() alasan: string;
-  @IsDateString() tanggalMulai: string;
-  @IsDateString() tanggalSelesai: string;
+  @IsInt()
+  @Type(() => Number)
+  pegawaiId: number;
+
+  @IsDateString()
+  tanggalMulai: string;
+
+  @IsOptional()
+  @IsString()
+  keterangan?: string;
 }

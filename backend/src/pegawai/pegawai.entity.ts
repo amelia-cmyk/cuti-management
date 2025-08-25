@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Cuti } from '../cuti/cuti.entity';
 
 @Entity()
 export class Pegawai {
@@ -22,4 +23,7 @@ export class Pegawai {
 
   @Column({ nullable: true })
   jenisKelamin: string;
+
+  @OneToMany(() => Cuti, (c) => c.pegawai)
+  cuti: Cuti[];
 }

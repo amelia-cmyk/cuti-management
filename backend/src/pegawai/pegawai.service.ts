@@ -5,25 +5,30 @@ import { Pegawai } from './pegawai.entity';
 
 @Injectable()
 export class PegawaiService {
-  constructor(
-    @InjectRepository(Pegawai)
-    private pegawaiRepo: Repository<Pegawai>,
-  ) {}
+  constructor(@InjectRepository(Pegawai) private readonly repo: Repository<Pegawai>) {}
 
-  findAll() {
-    return this.pegawaiRepo.find();
+  findAll(): Promise<Pegawai[]> {
+    return this.repo.find();
   }
 
-  create(data: Partial<Pegawai>) {
-    const pegawai = this.pegawaiRepo.create(data);
-    return this.pegawaiRepo.save(pegawai);
+  findAllWithCuti(): Promise<Pegawai[]> {
+    return this.repo.find({ relations: ['cuti'] });
   }
 
-  update(id: number, data: Partial<Pegawai>) {
-    return this.pegawaiRepo.update(id, data);
+  async create(data: Partial<Pegawai>) {
+    const p = this.repo.create(data);
+    return this.repo.save(p);
   }
 
-  delete(id: number) {
-    return this.pegawaiRepo.delete(id);
+  async update(id: number, data: Partial<Pegawai>) {
+    await this.repo.update(id, data);
+    return this.repo.findOne({ where: { id } });
+  }
+
+  async delete(id: number) {
+    const p = await this.repo.findOne({ where: { id } });
+    if (!p) return { deleted: false };
+    await this.repo.remove(p);
+    return { deleted: true };
   }
 }

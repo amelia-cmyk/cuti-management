@@ -1,6 +1,10 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { CutiService } from './cuti.service';
+import { CreateCutiDto } from './dto/create-cuti.dto';
+import { UpdateCutiDto } from './dto/update-cuti.dto';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('cuti')
 export class CutiController {
   constructor(private readonly cutiService: CutiService) {}
@@ -11,17 +15,17 @@ export class CutiController {
   }
 
   @Post()
-  create(@Body() body: any) {
-    return this.cutiService.create(body);
+  create(@Body() dto: CreateCutiDto) {
+    return this.cutiService.create(dto);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() body: any) {
-    return this.cutiService.update(id, body);
+  update(@Param('id') id: string, @Body() dto: UpdateCutiDto) {
+    return this.cutiService.update(Number(id), dto);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: number) {
-    return this.cutiService.delete(id);
+  remove(@Param('id') id: string) {
+    return this.cutiService.delete(Number(id));
   }
 }

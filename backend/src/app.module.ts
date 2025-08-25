@@ -3,10 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { PegawaiModule } from './pegawai/pegawai.module';
 import { CutiModule } from './cuti/cuti.module';
+import { AdminModule } from './admin/admin.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+    isGlobal: true, 
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -17,8 +21,11 @@ import { CutiModule } from './cuti/cuti.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    AdminModule, 
     PegawaiModule,
     CutiModule,
   ],
+    controllers: [AppController],
+    providers: [],
 })
 export class AppModule {}

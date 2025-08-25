@@ -6,17 +6,16 @@ export class Cuti {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'date' }) // Pastikan ini type date
-  tanggalMulai: Date;
+  @Column({ type: 'date' })
+  tanggalMulai: string;
 
   @Column({ nullable: true })
   keterangan: string;
 
-  @ManyToOne(() => Pegawai, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Pegawai, (p) => p.cuti, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({ name: 'pegawaiId' })
   pegawai: Pegawai;
 
   @Column()
-  pegawaiId: number;
-
+  pegawaiId: number; // kolom FK yang eksplisit
 }
