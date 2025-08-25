@@ -252,11 +252,23 @@ import api from "../app/lib/api";
 export default function Dashboard() {
   const [pegawai, setPegawai] = useState<any[]>([]);
   const [cuti, setCuti] = useState<any[]>([]);
-  const [formPegawai, setFormPegawai] = useState({ namaDepan: "", namaBelakang: "", email: "", noHp: "", alamat: "", jenisKelamin: "" });
-  const [formCuti, setFormCuti] = useState({ pegawaiId: "", tanggalMulai: "", keterangan: "" });
+  const [formPegawai, setFormPegawai] = useState({
+    namaDepan: "",
+    namaBelakang: "",
+    email: "",
+    noHp: "",
+    alamat: "",
+    jenisKelamin: "",
+  });
+  const [formCuti, setFormCuti] = useState({
+    pegawaiId: "",
+    tanggalMulai: "",
+    keterangan: "",
+  });
 
   const [editPegawaiId, setEditPegawaiId] = useState<number | null>(null);
   const [editCutiId, setEditCutiId] = useState<number | null>(null);
+  const [cutiError, setCutiError] = useState<string>("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -283,10 +295,11 @@ export default function Dashboard() {
     window.location.href = "/login";
   };
 
-  // Submit Tambah/Edit Pegawai
   const handleSubmitPegawai = async (e: any) => {
     e.preventDefault();
-    const emptyField = Object.entries(formPegawai).find(([_, value]) => !value || value.trim() === "");
+    const emptyField = Object.entries(formPegawai).find(
+      ([_, value]) => !value || value.trim() === ""
+    );
     if (emptyField) {
       alert(`Field "${emptyField[0]}" wajib diisi!`);
       return;
@@ -301,7 +314,14 @@ export default function Dashboard() {
         await api.post("/pegawai", formPegawai);
         alert("Pegawai berhasil ditambahkan!");
       }
-      setFormPegawai({ namaDepan: "", namaBelakang: "", email: "", noHp: "", alamat: "", jenisKelamin: "" });
+      setFormPegawai({
+        namaDepan: "",
+        namaBelakang: "",
+        email: "",
+        noHp: "",
+        alamat: "",
+        jenisKelamin: "",
+      });
       loadData();
     } catch (err) {
       console.error("Error POST/PUT Pegawai:", err);
@@ -321,36 +341,71 @@ export default function Dashboard() {
     });
   };
 
-  // Hapus Pegawai
   const handleDeletePegawai = async (id: number) => {
     if (!confirm("Yakin hapus pegawai ini?")) return;
     await api.delete(`/pegawai/${id}`);
     loadData();
   };
 
-  // Submit Tambah/Edit Cuti
   const handleSubmitCuti = async (e: any) => {
     e.preventDefault();
-    try {
-      const payload = {
-        ...formCuti,
-        pegawaiId: Number(formCuti.pegawaiId), // <- penting
-      };
+    setCutiError("");
 
+    if (!formCuti.pegawaiId || !formCuti.tanggalMulai) {
+      setCutiError("Pilih pegawai dan tanggal cuti!");
+      return;
+    }
+
+    const selectedDate = new Date(formCuti.tanggalMulai);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      setCutiError("Tanggal cuti tidak boleh sebelum hari ini!");
+      return;
+    }
+
+    // Filter cuti pegawai yang sama
+    const pegawaiCuti = cuti.filter(
+      (c) => c.pegawai?.id === Number(formCuti.pegawaiId)
+    );
+
+    // Validasi 1 hari/bulan
+    const sameMonth = pegawaiCuti.find(
+      (c) =>
+        new Date(c.tanggalMulai).getMonth() === selectedDate.getMonth() &&
+        new Date(c.tanggalMulai).getFullYear() === selectedDate.getFullYear()
+    );
+    if (sameMonth) {
+      setCutiError("Pegawai sudah mengambil cuti di bulan yang sama!");
+      return;
+    }
+
+    // Validasi 12 hari/tahun per tahun kalender
+    const selectedYear = selectedDate.getFullYear();
+    const totalYear = pegawaiCuti.filter(
+      (c) => new Date(c.tanggalMulai).getFullYear() === selectedYear
+    ).length;
+    if (totalYear >= 12) {
+      setCutiError("Pegawai sudah mencapai maksimal 12 hari cuti dalam tahun ini!");
+      return;
+    }
+
+    try {
+      const payload = { ...formCuti, pegawaiId: Number(formCuti.pegawaiId) };
       if (editCutiId) {
         await api.put(`/cuti/${editCutiId}`, payload);
         setEditCutiId(null);
       } else {
         await api.post("/cuti", payload);
       }
-
       setFormCuti({ pegawaiId: "", tanggalMulai: "", keterangan: "" });
       loadData();
     } catch (err) {
       console.error("Error POST/PUT Cuti:", err);
+      setCutiError("Gagal menambah cuti. Silakan coba lagi!");
     }
   };
-
 
   const handleDeleteCuti = async (id: number) => {
     if (!confirm("Yakin hapus cuti ini?")) return;
@@ -368,7 +423,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Form Tambah/Edit Pegawai */}
+      {/* Form Pegawai */}
       <div className="bg-white shadow-md rounded-xl p-4 mb-6">
         <h2 className="text-xl font-semibold mb-3">{editPegawaiId ? "Edit Pegawai" : "Tambah Pegawai"}</h2>
         <form onSubmit={handleSubmitPegawai} className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -403,7 +458,7 @@ export default function Dashboard() {
         </form>
       </div>
 
-      {/* Tabel Data Pegawai */}
+      {/* Tabel Pegawai */}
       <div className="bg-white shadow-md rounded-xl p-4 mb-6 overflow-x-auto">
         <h2 className="text-xl font-semibold mb-3">Data Pegawai</h2>
         <table className="w-full border-collapse border text-sm">
@@ -435,7 +490,7 @@ export default function Dashboard() {
         </table>
       </div>
 
-      {/* Form Tambah/Edit Cuti */}
+      {/* Form Cuti */}
       <div className="bg-white shadow-md rounded-xl p-4 mb-6">
         <h2 className="text-xl font-semibold mb-3">{editCutiId ? "Edit Cuti" : "Tambah Cuti"}</h2>
         <form onSubmit={handleSubmitCuti} className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -452,6 +507,7 @@ export default function Dashboard() {
           <input
             type="date"
             value={formCuti.tanggalMulai}
+            min={new Date().toISOString().split("T")[0]}
             onChange={(e) => setFormCuti({ ...formCuti, tanggalMulai: e.target.value })}
             className="border rounded p-2"
           />
@@ -461,13 +517,17 @@ export default function Dashboard() {
             onChange={(e) => setFormCuti({ ...formCuti, keterangan: e.target.value })}
             className="border rounded p-2"
           />
+          <small className="text-gray-500 block">
+            Input cuti 1 hari/bulan dan maksimal 12 hari/tahun
+          </small>
+          {cutiError && <p className="text-red-500 text-sm">{cutiError}</p>}
           <button type="submit" className="col-span-1 md:col-span-3 bg-green-500 text-white py-2 rounded hover:bg-green-600">
             {editCutiId ? "Update Cuti" : "Tambah Cuti"}
           </button>
         </form>
       </div>
 
-      {/* Tabel Data Cuti */}
+      {/* Tabel Cuti */}
       <div className="bg-white shadow-md rounded-xl p-4">
         <h2 className="text-xl font-semibold mb-3">Data Cuti</h2>
         <table className="w-full border-collapse border text-sm">
@@ -486,7 +546,19 @@ export default function Dashboard() {
                 <td className="border p-2">{c.tanggalMulai}</td>
                 <td className="border p-2">{c.keterangan}</td>
                 <td className="border p-2 flex gap-2">
-                  <button onClick={() => { setEditCutiId(c.id); setFormCuti({ pegawaiId: String(c.pegawai?.id ?? ""), tanggalMulai: c.tanggalMulai, keterangan: c.keterangan }); }} className="bg-yellow-400 px-2 py-1 rounded hover:bg-yellow-500">Edit</button>
+                  <button
+                    onClick={() => {
+                      setEditCutiId(c.id);
+                      setFormCuti({
+                        pegawaiId: String(c.pegawai?.id ?? ""),
+                        tanggalMulai: c.tanggalMulai,
+                        keterangan: c.keterangan,
+                      });
+                    }}
+                    className="bg-yellow-400 px-2 py-1 rounded hover:bg-yellow-500"
+                  >
+                    Edit
+                  </button>
                   <button onClick={() => handleDeleteCuti(c.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Hapus</button>
                 </td>
               </tr>
@@ -497,4 +569,6 @@ export default function Dashboard() {
     </main>
   );
 }
+
+
 

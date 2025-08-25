@@ -9,6 +9,9 @@ export class Cuti {
   @Column({ type: 'date' })
   tanggalMulai: string;
 
+  @Column({ type: 'date', nullable: true }) // tambahkan kolom ini
+  tanggalSelesai: string;
+
   @Column({ nullable: true })
   keterangan: string;
 
@@ -19,3 +22,5 @@ export class Cuti {
   @Column()
   pegawaiId: number; // kolom FK yang eksplisit
 }
+
+
